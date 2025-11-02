@@ -1,0 +1,122 @@
+import express from "express";
+import cors from "cors";
+import crypto from "crypto";
+
+const app = express();
+app.use(express.json());
+
+// ✅ Allow only your Netlify domain
+app.use(
+  cors({
+    origin: "https://quicktoppersharsh.netlify.app",
+  })
+);
+
+// In-memory storage (you can replace later with database)
+let validKeys = {};
+
+// 🕒 Generate 48-hour expiry (milliseconds)
+const EXPIRY_TIME = 48 * 60 * 60 * 1000;
+
+// 🧠 Generate new key when user visits homepage
+app.get("/", (req, res) => {
+  const newKey = crypto.randomBytes(16).toString("hex");
+  const expiresAt = Date.now() + EXPIRY_TIME;
+
+  // Store key
+  validKeys[newKey] = { expiresAt };
+
+  // HTML response (you can use your existing design here)
+  res.send(`
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Your Auth Key - QuickToppers</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #f5f7ff;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      color: #2b2d42;
+      padding: 20px;
+    }
+    .container {
+      background: #fff;
+      border-radius: 12px;
+      padding: 40px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+      text-align: center;
+      max-width: 500px;
+      width: 100%;
+    }
+    h1 { font-size: 22px; margin-bottom: 20px; }
+    input {
+      width: 100%;
+      padding: 14px;
+      font-size: 18px;
+      border: 2px solid #e9ecef;
+      border-radius: 12px;
+      background: #f8f9fa;
+      text-align: center;
+      font-family: monospace;
+      font-weight: 600;
+    }
+    button {
+      margin-top: 20px;
+      background: #4361ee;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 12px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    button:hover { background: #3a56d4; }
+    .meta {
+      margin-top: 10px;
+      color: #6c757d;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Your Authentication Key</h1>
+    <input type="text" value="${newKey}" readonly />
+    <button onclick="navigator.clipboard.writeText('${newKey}')">Copy Key</button>
+    <div class="meta">Valid for 48 hours • Device-bound</div>
+  </div>
+</body>
+</html>
+  `);
+});
+
+// ✅ Verify key endpoint
+app.post("/verify-key", (req, res) => {
+  const { key } = req.body;
+
+  if (!key || !validKeys[key]) {
+    return res.json({ valid: false, message: "Invalid key" });
+  }
+
+  const { expiresAt } = validKeys[key];
+
+  if (Date.now() > expiresAt) {
+    delete validKeys[key];
+    return res.json({ valid: false, message: "Key expired" });
+  }
+
+  return res.json({ valid: true, message: "Key valid" });
+});
+
+// ✅ Keep-alive route (optional health check)
+app.get("/health", (req, res) => res.send("OK"));
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
