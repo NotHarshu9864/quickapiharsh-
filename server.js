@@ -8,7 +8,7 @@ app.use(express.json());
 // ✅ Allow only your Netlify domain
 app.use(
   cors({
-    origin: "https://quicktoppersharsh.netlify.app",
+    origin: "https://quickmobileapi.netlify.app",
   })
 );
 
@@ -87,7 +87,7 @@ app.use(express.json());
 // ✅ Allow only your frontend domain
 app.use(
   cors({
-    origin: "https://quicktoppersharsh.netlify.app",
+    origin: "https://quickmobileapi.netlify.app",
   })
 );
 
