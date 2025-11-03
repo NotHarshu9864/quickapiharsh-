@@ -8,7 +8,7 @@ app.use(express.json());
 // ✅ Allow only your Netlify domain
 app.use(
   cors({
-    origin: "https://quickmobileapi.netlify.app",
+    origin: "https://quickmobileapi.netlify.app/auth",
   })
 );
 
